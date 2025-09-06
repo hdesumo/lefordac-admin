@@ -1,0 +1,19 @@
+module.exports = {
+  darkMode: "class",
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        lefordac: {
+          blue: "#1E3A8A",
+          accent: "#FBBF24",
+          secondary: "#2563EB",
+        },
+      },
+    },
+  },
+  plugins: [],
+}

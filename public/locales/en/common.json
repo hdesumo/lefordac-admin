@@ -1,0 +1,13 @@
+{
+  "dashboard": "Dashboard",
+  "contacts": "Contacts",
+  "gallery": "Gallery",
+  "members": "Members",
+  "messages": "Messages",
+  "new_message": "New Message",
+  "logout": "Logout",
+  "language": "Language",
+  "welcome": "Welcome to the FORDAC Dashboard",
+  "create_message": "Create a message",
+  "history_messages": "Message history"
+}

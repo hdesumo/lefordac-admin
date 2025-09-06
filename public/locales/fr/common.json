@@ -1,0 +1,13 @@
+{
+  "dashboard": "Tableau de bord",
+  "contacts": "Contacts",
+  "gallery": "Galerie",
+  "members": "Membres",
+  "messages": "Messages",
+  "new_message": "Nouveau message",
+  "logout": "Déconnexion",
+  "language": "Langue",
+  "welcome": "Bienvenue sur le tableau de bord FORDAC",
+  "create_message": "Créer un message",
+  "history_messages": "Historique des messages"
+}
