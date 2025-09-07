@@ -1,33 +1,81 @@
-export default function Dashboard() {
+export default function DashboardPage({ stats }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {/* Carte 1 */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h2 className="text-lg font-bold text-lefordac-blue dark:text-lefordac-accent">Utilisateurs</h2>
-        <p className="text-3xl font-bold mt-2">1,245</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">+12% ce mois</p>
-      </div>
+    <div>
+      <h1 className="text-2xl font-bold text-lefordac-blue dark:text-lefordac-accent mb-6">
+        Tableau de Bord
+      </h1>
 
-      {/* Carte 2 */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h2 className="text-lg font-bold text-lefordac-blue dark:text-lefordac-accent">Contacts</h2>
-        <p className="text-3xl font-bold mt-2">532</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">+8% ce mois</p>
-      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 text-center">
+          <h2 className="text-lg font-semibold">Membres</h2>
+          <p className="text-3xl font-bold text-lefordac-blue">
+            {stats.members}
+          </p>
+        </div>
 
-      {/* Carte 3 */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h2 className="text-lg font-bold text-lefordac-blue dark:text-lefordac-accent">Galerie</h2>
-        <p className="text-3xl font-bold mt-2">87</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Nouvelles photos</p>
-      </div>
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 text-center">
+          <h2 className="text-lg font-semibold">Actualités</h2>
+          <p className="text-3xl font-bold text-lefordac-blue">
+            {stats.news}
+          </p>
+        </div>
 
-      {/* Carte 4 */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h2 className="text-lg font-bold text-lefordac-blue dark:text-lefordac-accent">Statistiques</h2>
-        <p className="text-3xl font-bold mt-2">98%</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Disponibilité</p>
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 text-center">
+          <h2 className="text-lg font-semibold">Messages</h2>
+          <p className="text-3xl font-bold text-lefordac-blue">
+            {stats.messages}
+          </p>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 text-center">
+          <h2 className="text-lg font-semibold">Images</h2>
+          <p className="text-3xl font-bold text-lefordac-blue">
+            {stats.gallery}
+          </p>
+        </div>
       </div>
     </div>
   )
+}
+
+/* ======== Récupération des statistiques côté serveur ======== */
+export async function getServerSideProps() {
+  try {
+    const [membersRes, newsRes, messagesRes, galleryRes] = await Promise.all([
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/members`),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/news`),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/gallery`),
+    ])
+
+    const [members, news, messages, gallery] = await Promise.all([
+      membersRes.json(),
+      newsRes.json(),
+      messagesRes.json(),
+      galleryRes.json(),
+    ])
+
+    return {
+      props: {
+        stats: {
+          members: members?.length || 0,
+          news: news?.length || 0,
+          messages: messages?.length || 0,
+          gallery: gallery?.length || 0,
+        },
+      },
+    }
+  } catch (error) {
+    console.error("Erreur chargement stats:", error)
+    return {
+      props: {
+        stats: {
+          members: 0,
+          news: 0,
+          messages: 0,
+          gallery: 0,
+        },
+      },
+    }
+  }
 }

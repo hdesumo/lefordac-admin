@@ -1,12 +1,11 @@
 import { useState } from "react"
 import axios from "axios"
-import { cameroonData } from "../utils/cameroon-data"
 
-export default function MessagesAdmin() {
+export default function MessagesPage({ messages }) {
   const [form, setForm] = useState({
-    destinataires: "Tous",
+    destinataire: "",
     contenu: "",
-    operateur: "orange",
+    operateur: "",
   })
   const [status, setStatus] = useState(null)
 
@@ -18,11 +17,11 @@ export default function MessagesAdmin() {
     e.preventDefault()
     try {
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, form)
-      setStatus("Message enregistré avec succès ✅")
-      setForm({ destinataires: "Tous", contenu: "", operateur: "orange" })
+      setStatus("Message envoyé ✅")
+      setForm({ destinataire: "", contenu: "", operateur: "" })
     } catch (err) {
       console.error("Erreur envoi message:", err)
-      setStatus("Erreur lors de l’envoi ❌")
+      setStatus("Erreur ❌")
     }
   }
 
@@ -35,61 +34,88 @@ export default function MessagesAdmin() {
       {/* Formulaire */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 space-y-4 max-w-lg"
+        className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 space-y-4 max-w-lg mb-8"
       >
-        {/* Destinataires */}
-        <label className="block text-sm font-medium mb-1">Destinataires</label>
-        <select
-          name="destinataires"
-          value={form.destinataires}
+        <input
+          type="text"
+          name="destinataire"
+          placeholder="Numéro du destinataire"
+          value={form.destinataire}
           onChange={handleChange}
-          className="w-full border p-2 rounded dark:bg-gray-900"
-        >
-          <option value="Tous">Tous</option>
-          {cameroonData.regions.map((r, idx) => (
-            <option key={idx} value={r.name}>
-              {r.name} ({r.capital})
-            </option>
-          ))}
-        </select>
-
-        {/* Contenu */}
-        <label className="block text-sm font-medium mb-1">Contenu</label>
-        <textarea
-          name="contenu"
-          placeholder="Votre message..."
-          value={form.contenu}
-          onChange={handleChange}
-          rows="4"
           className="w-full border p-2 rounded dark:bg-gray-900"
           required
         />
 
-        {/* Opérateur */}
-        <label className="block text-sm font-medium mb-1">Opérateur</label>
-        <select
+        <textarea
+          name="contenu"
+          placeholder="Contenu du message"
+          value={form.contenu}
+          onChange={handleChange}
+          rows="3"
+          className="w-full border p-2 rounded dark:bg-gray-900"
+          required
+        />
+
+        <input
+          type="text"
           name="operateur"
+          placeholder="Opérateur (Orange, MTN, etc.)"
           value={form.operateur}
           onChange={handleChange}
           className="w-full border p-2 rounded dark:bg-gray-900"
-        >
-          <option value="orange">Orange</option>
-          <option value="mtn">MTN</option>
-        </select>
+        />
 
-        {/* Bouton */}
         <button
           type="submit"
           className="bg-lefordac-blue text-white px-4 py-2 rounded hover:bg-lefordac-secondary"
         >
-          Enregistrer
+          Envoyer
         </button>
 
-        {/* Status */}
-        {status && (
-          <p className="mt-2 text-sm font-medium">{status}</p>
-        )}
+        {status && <p className="mt-2 text-sm font-medium">{status}</p>}
       </form>
+
+      {/* Liste des messages */}
+      <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
+        <h2 className="text-lg font-semibold mb-4">Messages envoyés</h2>
+        {messages.length > 0 ? (
+          <ul className="space-y-3">
+            {messages.map((m) => (
+              <li key={m.id} className="border-b pb-2">
+                <p>
+                  <strong>À :</strong> {m.destinataire} ({m.operateur})
+                </p>
+                <p className="mt-1">{m.contenu}</p>
+                <p className="text-xs text-gray-500">
+                  {new Date(m.createdAt).toLocaleString()}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-500">Aucun message envoyé.</p>
+        )}
+      </div>
     </div>
   )
+}
+
+/* ======== Récupération des messages côté serveur ======== */
+export async function getServerSideProps() {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`)
+    const data = await res.json()
+    return {
+      props: {
+        messages: data || [],
+      },
+    }
+  } catch (error) {
+    console.error("Erreur chargement des messages:", error)
+    return {
+      props: {
+        messages: [],
+      },
+    }
+  }
 }

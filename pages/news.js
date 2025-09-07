@@ -9,6 +9,7 @@ export default function NewsPage({ news }) {
     type: "article",
   })
   const [status, setStatus] = useState(null)
+  const [editingId, setEditingId] = useState(null)
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -17,19 +18,51 @@ export default function NewsPage({ news }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/news`, form)
-      setStatus("News ajoutée avec succès ✅")
+      if (editingId) {
+        // Mise à jour
+        await axios.put(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/news/${editingId}`,
+          form
+        )
+        setStatus("Actualité mise à jour ✅")
+      } else {
+        // Création
+        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/news`, form)
+        setStatus("Actualité ajoutée ✅")
+      }
       setForm({ titre: "", sousTitre: "", contenu: "", type: "article" })
+      setEditingId(null)
     } catch (err) {
-      console.error("Erreur ajout news:", err)
-      setStatus("Erreur lors de l’ajout ❌")
+      console.error("Erreur news:", err)
+      setStatus("Erreur ❌")
+    }
+  }
+
+  const handleEdit = (item) => {
+    setForm({
+      titre: item.titre,
+      sousTitre: item.sousTitre,
+      contenu: item.contenu,
+      type: item.type,
+    })
+    setEditingId(item.id)
+  }
+
+  const handleDelete = async (id) => {
+    if (!confirm("Supprimer cette actualité ?")) return
+    try {
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/news/${id}`)
+      setStatus("Actualité supprimée ✅")
+    } catch (err) {
+      console.error("Erreur suppression:", err)
+      setStatus("Erreur ❌")
     }
   }
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-lefordac-blue dark:text-lefordac-accent mb-6">
-        Gestion des News
+        Gestion des Actualités
       </h1>
 
       {/* Formulaire */}
@@ -80,27 +113,41 @@ export default function NewsPage({ news }) {
           type="submit"
           className="bg-lefordac-blue text-white px-4 py-2 rounded hover:bg-lefordac-secondary"
         >
-          Enregistrer
+          {editingId ? "Mettre à jour" : "Enregistrer"}
         </button>
 
         {status && <p className="mt-2 text-sm font-medium">{status}</p>}
       </form>
 
-      {/* Liste des news */}
+      {/* Liste des actualités */}
       <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-        <h2 className="text-lg font-semibold mb-4">Liste des News</h2>
+        <h2 className="text-lg font-semibold mb-4">Liste des actualités</h2>
         {news.length > 0 ? (
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {news.map((n) => (
               <li key={n.id} className="border-b pb-2">
                 <h3 className="font-bold">{n.titre}</h3>
                 <p className="text-sm text-gray-600">{n.sousTitre}</p>
                 <p className="mt-1">{n.contenu}</p>
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => handleEdit(n)}
+                    className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                  >
+                    Modifier
+                  </button>
+                  <button
+                    onClick={() => handleDelete(n.id)}
+                    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                  >
+                    Supprimer
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-gray-500">Aucune news disponible.</p>
+          <p className="text-gray-500">Aucune actualité disponible.</p>
         )}
       </div>
     </div>
@@ -118,7 +165,7 @@ export async function getServerSideProps() {
       },
     }
   } catch (error) {
-    console.error("Erreur chargement des news:", error)
+    console.error("Erreur chargement news:", error)
     return {
       props: {
         news: [],
