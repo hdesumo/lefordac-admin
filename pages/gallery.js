@@ -1,65 +1,36 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import axios from "axios"
 
-export default function GalleryAdmin() {
-  const [gallery, setGallery] = useState([])
+export default function GalleryPage({ gallery }) {
   const [form, setForm] = useState({
     titre: "",
-    type: "photo",
-    media: null,
-    description: "",
+    url: "",
   })
+  const [status, setStatus] = useState(null)
 
-  // Récupérer la galerie
-  const fetchGallery = async () => {
-    try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/gallery`)
-      setGallery(res.data)
-    } catch (err) {
-      console.error("Erreur chargement galerie:", err)
-    }
-  }
-
-  useEffect(() => {
-    fetchGallery()
-  }, [])
-
-  // Gestion des inputs
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  const handleFileChange = (e) => {
-    setForm({ ...form, media: e.target.files[0] })
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const data = new FormData()
-    data.append("titre", form.titre)
-    data.append("type", form.type)
-    data.append("description", form.description)
-    if (form.media) data.append("media", form.media)
-
-    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/gallery`, data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    })
-
-    setForm({ titre: "", type: "photo", media: null, description: "" })
-    fetchGallery()
+    try {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/gallery`, form)
+      setStatus("Image ajoutée ✅")
+      setForm({ titre: "", url: "" })
+    } catch (err) {
+      console.error("Erreur ajout image:", err)
+      setStatus("Erreur ❌")
+    }
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-lefordac-blue dark:text-lefordac-accent mb-6">
-        Gestion Galerie
-      </h1>
+      <h1 className="text-2xl font-bold mb-6">Galerie</h1>
 
-      {/* Formulaire d’ajout */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white dark:bg-gray-800 p-6 shadow rounded-lg mb-6 space-y-3 max-w-lg"
-        encType="multipart/form-data"
+        className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 space-y-4 max-w-lg mb-8"
       >
         <input
           type="text"
@@ -67,62 +38,49 @@ export default function GalleryAdmin() {
           placeholder="Titre"
           value={form.titre}
           onChange={handleChange}
-          className="w-full border p-2 rounded dark:bg-gray-900"
+          className="w-full border p-2 rounded"
           required
         />
-        <textarea
-          name="description"
-          placeholder="Description"
-          value={form.description}
-          onChange={handleChange}
-          className="w-full border p-2 rounded dark:bg-gray-900"
-        />
-        <select
-          name="type"
-          value={form.type}
-          onChange={handleChange}
-          className="w-full border p-2 rounded dark:bg-gray-900"
-        >
-          <option value="photo">Photo</option>
-          <option value="video">Vidéo</option>
-        </select>
         <input
-          type="file"
-          accept="image/*,video/*"
-          onChange={handleFileChange}
-          className="w-full border p-2 rounded dark:bg-gray-900"
+          type="url"
+          name="url"
+          placeholder="Lien de l’image"
+          value={form.url}
+          onChange={handleChange}
+          className="w-full border p-2 rounded"
+          required
         />
-        <button
-          type="submit"
-          className="bg-lefordac-blue text-white px-4 py-2 rounded hover:bg-lefordac-secondary"
-        >
+
+        <button type="submit" className="bg-lefordac-blue text-white px-4 py-2 rounded">
           Ajouter
         </button>
+
+        {status && <p>{status}</p>}
       </form>
 
-      {/* Liste galerie */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {gallery.map((g) => (
-          <div key={g.id} className="bg-white dark:bg-gray-800 shadow rounded p-4">
-            <h3 className="font-bold">{g.titre}</h3>
-            {g.type === "video" ? (
-              <video controls className="w-full rounded mt-2">
-                <source
-                  src={`${process.env.NEXT_PUBLIC_API_URL}${g.mediaUrl}`}
-                  type="video/mp4"
-                />
-              </video>
-            ) : (
-              <img
-                src={`${process.env.NEXT_PUBLIC_API_URL}${g.mediaUrl}`}
-                alt={g.titre}
-                className="w-full rounded mt-2"
-              />
-            )}
-            <p className="text-sm mt-2">{g.description}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {gallery.length > 0 ? (
+          gallery.map((img) => (
+            <div key={img.id} className="border rounded overflow-hidden">
+              <img src={img.url} alt={img.titre} className="w-full h-40 object-cover" />
+              <p className="p-2 text-sm">{img.titre}</p>
+            </div>
+          ))
+        ) : (
+          <p>Aucune image disponible.</p>
+        )}
       </div>
     </div>
   )
+}
+
+export async function getServerSideProps() {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/gallery`)
+    const data = await res.json()
+    return { props: { gallery: data || [] } }
+  } catch (error) {
+    console.error("Erreur chargement galerie:", error)
+    return { props: { gallery: [] } }
+  }
 }
