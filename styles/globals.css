@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
-  @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
+/* Ajout de styles globaux */
+body {
+  @apply bg-gray-100 text-gray-900;
+}
+
+.dark body {
+  @apply bg-gray-900 text-gray-100;
 }
